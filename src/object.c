@@ -2,7 +2,9 @@
 #include "scene.h"   // Ensure struct Scene is visible
 #include "vector.h"
 #include "ray.h"
+#define _USE_MATH_DEFINES 
 #include <math.h>     // For sqrtf
+#include <stdio.h>
 
 // Sphere intersection function
 int intersect_ray_sphere(Ray ray, Sphere sphere, float *t) {
@@ -33,6 +35,21 @@ int intersect_ray_sphere(Ray ray, Sphere sphere, float *t) {
     }
 }
 
+// Plane intersection function
+
+int intersect_ray_plane(Ray ray, Plane plane, float *t) {
+    float denom = vector_dot(plane.normal, ray.direction);
+    if (fabs(denom) > 1e-6) {  // Ensure the ray is not parallel to the plane
+        Vector3 p0l0 = vector_sub(plane.point, ray.origin);
+        *t = vector_dot(p0l0, plane.normal) / denom;
+        if (*t >= 0) {
+            printf("Plane intersected at t = %f\n", *t);  // Print the intersection distance
+            return 1;
+        }
+    }
+    return 0;
+}
+
 
 // Find the nearest object function
 int find_nearest_object(struct Scene *scene, Ray ray, struct HitInfo *hit) {
@@ -41,19 +58,31 @@ int find_nearest_object(struct Scene *scene, Ray ray, struct HitInfo *hit) {
 
     for (int i = 0; i < scene->objects.sphere_count; i++) {
         float t;
-
-        // Check if the ray intersects this sphere
-        if (intersect_ray_sphere(ray, scene->objects.spheres[i], &t)) {
-            if (t < closest_t) {
-                closest_t = t;
-                hit->t = t;
-                hit->point = vector_add(ray.origin, vector_scale(ray.direction, t));
-                hit->normal = vector_normalize(vector_sub(hit->point, scene->objects.spheres[i].center));
-                hit->object = &scene->objects.spheres[i];  // Assign directly from the scene
-                found = 1;
-            }
+        if (intersect_ray_sphere(ray, scene->objects.spheres[i], &t) && t < closest_t) {
+            closest_t = t;
+            hit->t = t;
+            hit->point = vector_add(ray.origin, vector_scale(ray.direction, t));
+            hit->normal = vector_normalize(vector_sub(hit->point, scene->objects.spheres[i].center));
+            hit->object_type = OBJECT_SPHERE;
+            hit->object = &scene->objects.spheres[i];
+            found = 1;
         }
     }
 
-    return found;  // Return 1 if any intersection was found, otherwise 0
+    // Check for nearest plane
+    for (int i = 0; i < scene->objects.plane_count; i++) {
+        float t;
+        if (intersect_ray_plane(ray, scene->objects.planes[i], &t) && t < closest_t) {
+            closest_t = t;
+            hit->t = t;
+            hit->point = vector_add(ray.origin, vector_scale(ray.direction, t));
+            hit->normal = scene->objects.planes[i].normal;
+            hit->object_type = OBJECT_PLANE;
+            hit->object = &scene->objects.planes[i];
+            found = 1;
+        }
+    }
+
+
+    return found;
 }

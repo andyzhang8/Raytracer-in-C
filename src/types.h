@@ -3,14 +3,18 @@
 
 #include "vector.h"
 #include "material.h"
-#include "ray.h"  // Include Ray definition
+#include "ray.h"
 
-// Forward declarations for shared structures to break circular dependencies
+// Forward declarations
 struct Scene;
 struct HitInfo;
 struct SceneObjects;
 
-// Basic types commonly used across the project
+// Object type identifiers
+#define OBJECT_SPHERE 1
+#define OBJECT_PLANE 2
+
+// Basic types
 typedef struct {
     Vector3 center;
     float radius;
@@ -18,15 +22,24 @@ typedef struct {
 } Sphere;
 
 typedef struct {
+    Vector3 point;    // A point on the plane
+    Vector3 normal;   // Normal vector to the plane
+    Material material;
+} Plane;
+
+typedef struct {
     Sphere *spheres;
     int sphere_count;
+    Plane *planes;
+    int plane_count;
 } SceneObjects;
 
-typedef struct HitInfo {  // Updated to struct HitInfo
+typedef struct HitInfo {
     Vector3 point;
     Vector3 normal;
     float t;
-    Sphere *object;
+    int object_type;  // Type of object hit (SPHERE or PLANE)
+    void *object;     // Pointer to the specific object (Sphere or Plane)
 } HitInfo;
 
 #endif // TYPES_H

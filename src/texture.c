@@ -1,57 +1,27 @@
+#define _USE_MATH_DEFINES
+#define STB_IMAGE_IMPLEMENTATION  // This line is needed to define the implementation
+#include "stb_image.h"            // Include stb_image.h after the definition
 #include "texture.h"
 #include <stdio.h>
 #include <stdlib.h>
-#define _USE_MATH_DEFINES 
 #include <math.h>
 
-// Load a texture from a PPM file
+// Load a texture from a JPG file
 Texture load_texture(const char *filename) {
     Texture texture;
-    FILE *file = fopen(filename, "r");
-    if (!file) {
-        fprintf(stderr, "Error: Unable to open texture file %s\n", filename);
-        texture.width = texture.height = 0;
-        texture.data = NULL;
-        return texture;
-    }
+    int channels;
 
-    // Read PPM header
-    char format[3];
-    fscanf(file, "%2s", format);
-    if (format[0] != 'P' || format[1] != '3') {
-        fprintf(stderr, "Error: Unsupported PPM format in file %s\n", filename);
-        fclose(file);
-        texture.width = texture.height = 0;
-        texture.data = NULL;
-        return texture;
-    }
-
-    // Read image dimensions and maximum color value
-    int max_color;
-    fscanf(file, "%d %d %d", &texture.width, &texture.height, &max_color);
-
-    // Allocate memory for the texture data
-    texture.data = malloc(sizeof(Vector3) * texture.width * texture.height);
+    // Use stb_image to load JPG data
+    texture.data = (Vector3 *)stbi_load(filename, &texture.width, &texture.height, &channels, 3);
     if (!texture.data) {
-        fprintf(stderr, "Error: Unable to allocate memory for texture %s\n", filename);
-        fclose(file);
+        fprintf(stderr, "Error: Unable to load texture file %s\n", filename);
         texture.width = texture.height = 0;
         return texture;
     }
 
-    // Read pixel data
-    for (int i = 0; i < texture.width * texture.height; i++) {
-        int r, g, b;
-        fscanf(file, "%d %d %d", &r, &g, &b);
-        texture.data[i] = (Vector3){
-            r / (float)max_color,
-            g / (float)max_color,
-            b / (float)max_color
-        };
-    }
+    // Print success message
+    printf("Loaded texture from %s (Width: %d, Height: %d, Channels: %d)\n", filename, texture.width, texture.height, channels);
 
-    fclose(file);
-    printf("Loaded texture from %s\n", filename);
     return texture;
 }
 
@@ -75,13 +45,19 @@ Vector3 get_texture_color(Texture *texture, float u, float v) {
     x = x % texture->width;
     y = y % texture->height;
 
-    return texture->data[y * texture->width + x];
+    // Retrieve the RGB values and normalize to [0, 1]
+    unsigned char *pixel = (unsigned char *)texture->data + (y * texture->width + x) * 3;
+    return (Vector3){
+        pixel[0] / 255.0f,
+        pixel[1] / 255.0f,
+        pixel[2] / 255.0f
+    };
 }
 
 // Free the memory used by the texture
 void free_texture(Texture *texture) {
     if (texture->data) {
-        free(texture->data);
+        stbi_image_free(texture->data);
         texture->data = NULL;
     }
     texture->width = texture->height = 0;

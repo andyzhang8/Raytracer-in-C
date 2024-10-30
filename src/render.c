@@ -16,7 +16,6 @@ void set_pixel(Vector3 *color_data, int x, int y, int width, Vector3 color) {
     color_data[y * width + x] = color;
 }
 
-// Main render function
 void render(struct Scene scene, Camera camera, int width, int height, int optimize) {
     Vector3 *color_data = malloc(sizeof(Vector3) * width * height);
     if (!color_data) {
@@ -24,11 +23,27 @@ void render(struct Scene scene, Camera camera, int width, int height, int optimi
         exit(1);
     }
 
+    // Check if the scene has at least one object or light
+    if (scene.objects.sphere_count <= 0 && scene.point_light_count <= 0 && scene.directional_light_count <= 0) {
+        fprintf(stderr, "Warning: No objects or lights in the scene.\n");
+    }
+
     // Loop over each pixel and trace rays
     for (int y = 0; y < height; y++) {
         for (int x = (optimize && y % 2 == 1) ? 1 : 0; x < width; x += (optimize ? 2 : 1)) {
             Ray ray = generate_camera_ray(camera, x, y, width, height);
+
+            // Confirm ray direction is valid
+            if (ray.direction.x == 0 && ray.direction.y == 0 && ray.direction.z == 0) {
+                fprintf(stderr, "Warning: Generated ray at (%d, %d) has zero direction.\n", x, y);
+                continue;
+            }
+
             Vector3 color = trace_ray(&scene, ray, MAX_RECURSION_DEPTH);
+            if (color.x < 0 || color.y < 0 || color.z < 0) {
+                fprintf(stderr, "Warning: Invalid color generated at pixel (%d, %d).\n", x, y);
+            }
+
             set_pixel(color_data, x, y, width, color);
         }
     }
@@ -43,6 +58,7 @@ void render(struct Scene scene, Camera camera, int width, int height, int optimi
     // Clean up memory
     free(color_data);
 }
+
 
 // Save image function
 void save_image(Vector3 *color_data, int width, int height) {

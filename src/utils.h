@@ -15,5 +15,6 @@ float degrees_to_radians(float degrees);
 // Generate a random float between 0 and 1
 float random_float();
 
+extern float random_float();
 
 #endif // UTILS_H

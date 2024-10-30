@@ -11,6 +11,7 @@ float clamp(float value, float min, float max) {
     return value;
 }
 
+
 // Linearly interpolate between two values
 float lerp(float a, float b, float t) {
     return a * (1.0f - t) + b * t;
@@ -21,9 +22,8 @@ float degrees_to_radians(float degrees) {
     return degrees * (M_PI / 180.0f);
 }
 
-// Generate a random float between 0 and 1
-float random_float() {
-    return rand() / (float)RAND_MAX;
-}
 
+float random_float() {
+    return (float)rand() / RAND_MAX * 2.0f - 1.0f;
+}
 

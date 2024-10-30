@@ -6,14 +6,16 @@
 
 // Material structure containing properties for shading and light interaction
 typedef struct {
-    Vector3 color;       // Base color of the material
-    float diffuse;       // Diffuse reflection coefficient (controls the diffuse shading intensity)
-    float specular;      // Specular reflection coefficient (controls the specular highlight intensity)
-    float reflectivity;  // Reflectivity factor (0 to 1), where 1 is a perfect mirror
-    float refractivity;  // Refractivity factor (0 to 1), where 1 is fully transparent
-    float ior;           // Index of Refraction (IOR) for transparent materials (e.g., glass, water)
-    float shininess;     // Shininess factor for specular highlights (higher values = sharper reflections)
-    Texture *texture;    // Pointer to a texture, if the material has one
+    Vector3 color;
+    float diffuse;
+    float specular;
+    float reflectivity;
+    float refractivity;
+    float ior;
+    float shininess;         // Re-add shininess for specular reflection
+    int has_texture;         // Field to indicate if material has a texture
+    Texture *texture;        // Pointer to texture data
+    int tex_width, tex_height, tex_channels; // Texture dimensions
 } Material;
 
 // Functions for creating and managing materials
